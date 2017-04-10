@@ -1,5 +1,7 @@
 package com.shoo.volley;
 
+import android.text.TextUtils;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -70,7 +72,9 @@ public class HurlStack implements HttpStack {
             httpResponse) {
         Map<String, List<String>> headerFields = connection.getHeaderFields();
         for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
-            httpResponse.addHeader(new BasicHeader(entry.getKey(), entry.getValue().get(0)));
+            if (!TextUtils.isEmpty(entry.getKey())) {
+                httpResponse.addHeader(new BasicHeader(entry.getKey(), entry.getValue().get(0)));
+            }
         }
     }
 

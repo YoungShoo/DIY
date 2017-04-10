@@ -5,6 +5,8 @@ package com.shoo.volley;
  */
 public class Response<T> {
 
+    public boolean intermediate = false;
+
     public static <T> Response<T> success(T data, Cache.Entry entry) {
         return new Response<>(data, entry, null);
     }

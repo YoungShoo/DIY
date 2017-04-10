@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Shoo on 17-4-9.
@@ -27,6 +28,7 @@ public class RequestQueue {
     private final PriorityBlockingQueue<Request<?>> mCacheQueue = new PriorityBlockingQueue<>();
     private final Set<Request<?>> mCurrentRequest = new HashSet<>();
     private final Map<String, Queue<Request<?>>> mWaitingQueue = new HashMap<>();
+    private final AtomicInteger mSequenceGenerator = new AtomicInteger();
 
     public RequestQueue(Network network, Cache cache) {
         mNetwork = network;
@@ -48,12 +50,17 @@ public class RequestQueue {
 
     public void stop() {
         for (NetworkDispatcher networkDispatcher : mNetworkDispatchers) {
-            networkDispatcher.quit();
+            if (networkDispatcher != null) {
+                networkDispatcher.quit();
+            }
         }
         mCacheDispatcher.quit();
     }
 
     public void add(Request<?> request) {
+        request.setRequestQueue(this);
+        request.setSequence(getSequenceNumber());
+
         synchronized (mCurrentRequest) {
             mCurrentRequest.add(request);
         }
@@ -77,6 +84,10 @@ public class RequestQueue {
                 mCacheQueue.add(request);
             }
         }
+    }
+
+    private int getSequenceNumber() {
+        return mSequenceGenerator.getAndIncrement();
     }
 
     public void finish(Request<?> request) {

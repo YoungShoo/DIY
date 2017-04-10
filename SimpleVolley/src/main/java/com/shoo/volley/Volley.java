@@ -8,6 +8,10 @@ import android.content.Context;
 
 public class Volley {
 
+    public static RequestQueue newRequestQueue(Context context) {
+        return newRequestQueue(context, null);
+    }
+
     public static RequestQueue newRequestQueue(Context context, HttpStack stack) {
         Cache cache = new NoCache();
 

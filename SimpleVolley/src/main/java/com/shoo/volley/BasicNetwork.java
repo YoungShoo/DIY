@@ -8,7 +8,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.impl.cookie.DateUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,8 +60,8 @@ public class BasicNetwork implements Network {
                 throw new IOException();
             }
 
-            return new NetworkResponse(HttpStatus.SC_MULTIPLE_CHOICES, data, headers, false, SystemClock
-                    .elapsedRealtime() - startTimeMs);
+            return new NetworkResponse(HttpStatus.SC_OK, data, headers, false, SystemClock.elapsedRealtime() -
+                    startTimeMs);
         } catch (IOException e) {
             throw new VolleyError(e);
         }
@@ -85,8 +87,19 @@ public class BasicNetwork implements Network {
         return headers;
     }
 
-    private byte[] entityToBytes(HttpEntity entity) {
-        // TODO: 17-4-9
-        return new byte[0];
+    private byte[] entityToBytes(HttpEntity entity) throws IOException {
+        if (entity == null) {
+            return null;
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        InputStream inputStream = entity.getContent();
+        byte[] buffer = new byte[1024];
+        int count;
+        while ((count = inputStream.read(buffer)) != -1) {
+            baos.write(buffer, 0, count);
+        }
+        entity.consumeContent();
+        return baos.toByteArray();
     }
 }

@@ -57,7 +57,7 @@ public class NetworkDispatcher extends Thread {
                 Response<?> response = request.parseNetworkResponse(networkResponse);
 
                 String cacheKey = request.getCacheKey();
-                if (request.shouldCache()) {
+                if (request.shouldCache() && response.entry != null) {
                     mCache.put(cacheKey, response.entry);
                 }
 

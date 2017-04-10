@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Created by Shoo on 17-4-9.
  */
-public abstract class Request<T> {
+public abstract class Request<T> implements Comparable<Request<T>> {
 
     private static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
 
@@ -21,8 +21,22 @@ public abstract class Request<T> {
     @IntDef({Method.GET, Method.POST, Method.HEAD})
     public @interface MethodDef {}
 
+    public interface Priority {
+        int LOW = 1;
+        int NORMAL = 2;
+        int HIGH = 3;
+        int IMMEDIATE = 4;
+    }
+
+    @IntDef({Priority.LOW, Priority.NORMAL, Priority.HIGH, Priority.IMMEDIATE})
+    public @interface PriorityDef {}
+
+    public interface Listener<T> {
+        void onResponse(T result);
+    }
+
     public interface ErrorListener {
-        void deliverError(VolleyError error);
+        void onErrorResponse(VolleyError error);
     }
 
     private @MethodDef int mMethod;
@@ -33,6 +47,8 @@ public abstract class Request<T> {
     private boolean mDelivered = false;
     private boolean mCanceled = false;
     private boolean mShouldCache = false;
+    private int mPriority = Priority.NORMAL;
+    private int mSequence;
 
     public Request(@MethodDef int method, String url, ErrorListener errorListener) {
         mMethod = method;
@@ -62,7 +78,7 @@ public abstract class Request<T> {
 
     public void deliverError(VolleyError error) {
         if (mErrorListener != null) {
-            mErrorListener.deliverError(error);
+            mErrorListener.onErrorResponse(error);
         }
     }
 
@@ -116,5 +132,27 @@ public abstract class Request<T> {
 
     public String getParamsEncoding() {
         return DEFAULT_PARAMS_ENCODING;
+    }
+
+    public void setPriority(@PriorityDef int priority) {
+        mPriority = priority;
+    }
+
+    private @PriorityDef int getPriority() {
+        return mPriority;
+    }
+
+    public void setSequence(int sequence) {
+        mSequence = sequence;
+    }
+
+    public int getSequence() {
+        return mSequence;
+    }
+
+    @Override
+    public int compareTo(Request<T> that) {
+        return this.getPriority() == that.getPriority() ? that.getSequence() - this.getSequence() : that.getPriority
+                () - this.getPriority();
     }
 }

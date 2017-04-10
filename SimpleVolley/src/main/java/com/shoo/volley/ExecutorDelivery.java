@@ -48,6 +48,10 @@ public class ExecutorDelivery implements ResponseDelivery {
             } else {
                 mRequest.deliverError(mResponse.error);
             }
+
+            if (!mResponse.intermediate) {
+                mRequest.finish();
+            }
         }
     }
 }

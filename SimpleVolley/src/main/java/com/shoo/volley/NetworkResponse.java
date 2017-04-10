@@ -1,5 +1,7 @@
 package com.shoo.volley;
 
+import org.apache.http.HttpStatus;
+
 import java.util.Map;
 
 /**
@@ -20,5 +22,9 @@ public class NetworkResponse {
         this.headers = headers;
         this.notModified = notModified;
         this.networkTimeMs = networkTimeMs;
+    }
+
+    public NetworkResponse(byte[] data, Map<String, String> responseHeaders) {
+        this(HttpStatus.SC_OK, data, responseHeaders, false, 0);
     }
 }

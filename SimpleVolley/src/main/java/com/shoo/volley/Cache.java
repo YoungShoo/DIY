@@ -17,5 +17,9 @@ public interface Cache {
 
         public byte[] data;
         public long lastModified;
+
+        public boolean isExpired() {
+            return true;
+        }
     }
 }
