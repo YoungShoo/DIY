@@ -5,10 +5,16 @@ package com.shoo.volley;
  */
 public class VolleyError extends Exception {
 
+    public final NetworkResponse networkResponse;
     private long mNetworkTimeMs;
 
     public VolleyError(Exception e) {
         super(e);
+        networkResponse = null;
+    }
+
+    public VolleyError(NetworkResponse networkResponse) {
+        this.networkResponse = networkResponse;
     }
 
     public void setNetworkTimeMs(long timeMs) {

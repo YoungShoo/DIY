@@ -12,6 +12,7 @@ import java.util.Map;
 public class HttpHeaderParser {
 
     private static final String CHARSET = "charset";
+    private static final String HEADER_LOCATION = "Location";
 
     public static Cache.Entry parseResponseHeaders(Map<String, String> headers) {
         // TODO: 17-4-10 Shoo
@@ -35,5 +36,14 @@ public class HttpHeaderParser {
         }
 
         return HTTP.DEFAULT_CONTENT_CHARSET;
+    }
+
+    public static String parseLocation(Map<String, String> headers) {
+        if (headers == null || headers.isEmpty()) {
+            return null;
+        }
+
+        String location = headers.get(HEADER_LOCATION);
+        return location;
     }
 }

@@ -1,6 +1,9 @@
 package com.shoo.volley;
 
 import android.support.annotation.IntDef;
+import android.text.TextUtils;
+
+import com.shoo.volley.error.RedirectError;
 
 import java.util.Collections;
 import java.util.Map;
@@ -11,6 +14,8 @@ import java.util.Map;
 public abstract class Request<T> implements Comparable<Request<T>> {
 
     private static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
+    private String mRequestUrl;
+    private RetryPolicy mRetryPolicy;
 
     public interface Method {
         int GET = 1;
@@ -53,6 +58,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public Request(@MethodDef int method, String url, ErrorListener errorListener) {
         mMethod = method;
         mUrl = url;
+        mRequestUrl = url;
         mErrorListener = errorListener;
     }
 
@@ -148,6 +154,33 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public int getSequence() {
         return mSequence;
+    }
+
+    public void setRetryPolicy(RetryPolicy retryPolicy) {
+        mRetryPolicy = retryPolicy;
+    }
+
+    public boolean retry(VolleyError error) {
+        if (mRetryPolicy != null && mRetryPolicy.retry(error)) {
+            return true;
+        }
+
+        return retryOnRedirectError(error);
+    }
+
+    private boolean retryOnRedirectError(VolleyError error) {
+        if (error instanceof RedirectError && error.networkResponse != null) {
+            String location = HttpHeaderParser.parseLocation(error.networkResponse.headers);
+            if (!TextUtils.isEmpty(location)) {
+                mRequestUrl = location;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getRequestUrl() {
+        return mRequestUrl;
     }
 
     @Override

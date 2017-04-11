@@ -73,7 +73,6 @@ public class NetworkDispatcher extends Thread {
             }
 
         }
-
     }
 
     public void quit() {

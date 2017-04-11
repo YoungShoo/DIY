@@ -32,7 +32,7 @@ public class HurlStack implements HttpStack {
     public HttpResponse performRequest(Request<?> request, Map<String, String> additionalHeaders)
             throws VolleyError {
 
-        String url = request.getUrl();
+        String url = request.getRequestUrl();
         try {
             URL parsedUrl = new URL(url);
 
