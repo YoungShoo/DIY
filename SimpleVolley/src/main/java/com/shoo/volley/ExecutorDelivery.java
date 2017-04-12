@@ -22,18 +22,25 @@ public class ExecutorDelivery implements ResponseDelivery {
 
     @Override
     public void postResponse(Request<?> request, Response<?> response) {
+        postResponse(request, response, null);
+    }
+
+    @Override
+    public void postResponse(Request<?> request, Response<?> response, Runnable runnable) {
         request.markDelivered();
-        mResponsePoster.execute(new ResponseDeliveryRunnable(request, response));
+        mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, runnable));
     }
 
     private static class ResponseDeliveryRunnable implements Runnable {
 
         private final Request mRequest;
         private final Response mResponse;
+        private final Runnable mRunnable;
 
-        public ResponseDeliveryRunnable(Request request, Response response) {
+        public ResponseDeliveryRunnable(Request request, Response response, Runnable runnable) {
             mRequest = request;
             mResponse = response;
+            mRunnable = runnable;
         }
 
         @Override
@@ -51,6 +58,10 @@ public class ExecutorDelivery implements ResponseDelivery {
 
             if (!mResponse.intermediate) {
                 mRequest.finish();
+            }
+
+            if (mRunnable != null) {
+                mRunnable.run();
             }
         }
     }

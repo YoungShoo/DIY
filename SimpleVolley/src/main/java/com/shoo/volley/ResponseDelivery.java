@@ -7,4 +7,5 @@ public interface ResponseDelivery {
 
     void postResponse(Request<?> request, Response<?> response);
 
+    void postResponse(Request<?> request, Response<?> response, Runnable runnable);
 }

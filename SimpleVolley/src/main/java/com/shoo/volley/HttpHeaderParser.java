@@ -11,12 +11,73 @@ import java.util.Map;
  */
 public class HttpHeaderParser {
 
-    private static final String CHARSET = "charset";
-    private static final String HEADER_LOCATION = "Location";
+    public static Cache.Entry parseCacheHeaders(NetworkResponse networkResponse) {
+        long now = System.currentTimeMillis();
 
-    public static Cache.Entry parseResponseHeaders(Map<String, String> headers) {
-        // TODO: 17-4-10 Shoo
-        return new Cache.Entry();
+        Map<String, String> headers = networkResponse.headers;
+
+        long staleWhileRevalidate = 0;
+        long maxAge = 0;
+        boolean mustRevalidate = false;
+        boolean hasCacheControl = false;
+
+        String eTag = headers.get(HttpHeaders.ETAG);
+
+        String headerValue = headers.get(HttpHeaders.CACHE_CONTROL);
+        if (!TextUtils.isEmpty(headerValue)) {
+            hasCacheControl = true;
+            String[] tokens = headerValue.trim().split(",");
+            for (String token : tokens) {
+                if ("no-cache".equals(token) || "no-store".equals(token)) {
+                    return null;
+                }
+                if (token.startsWith("max-age=")) {
+                    try {
+                        maxAge = Long.parseLong(token.substring("max-age=".length()));
+                    } catch (Exception e) {
+                    }
+                } else if (token.startsWith("stale-while-revalidate=")) {
+                    try {
+                        staleWhileRevalidate = Long.parseLong(token.substring("stale-while-revalidate".length()));
+                    } catch (Exception e) {
+                    }
+                } else if ("must-revalidate".equals(token) || "proxy-revalidate".equals(token)) {
+                    mustRevalidate = true;
+                }
+            }
+        }
+
+        long serverDate = parseDateAsEpoch(headers.get(HttpHeaders.DATE));
+        long serverExpires = parseDateAsEpoch(headers.get(HttpHeaders.EXPIRES));
+        long lastModified = Long.parseLong(headers.get(HttpHeaders.LAST_MODIFIED));
+
+        long softExpires = 0;
+        long finalExpires = 0;
+        if (hasCacheControl) {
+            softExpires = now + maxAge * 1000;
+            finalExpires = mustRevalidate ? softExpires : softExpires + staleWhileRevalidate * 1000;
+        } else if (serverDate > 0 && serverExpires - serverDate >= 0) {
+            softExpires = now + (serverExpires - serverDate);
+            finalExpires = softExpires;
+        }
+
+        Cache.Entry entry = new Cache.Entry();
+        entry.data = networkResponse.data;
+        entry.eTag = eTag;
+        entry.softExpires = softExpires;
+        entry.finalExpires = finalExpires;
+        entry.serverDate = serverDate;
+        entry.lastModified = lastModified;
+        entry.responseHeaders = headers;
+        return entry;
+    }
+
+    private static long parseDateAsEpoch(String headerValue) {
+        try {
+            return Long.parseLong(headerValue);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public static String parseCharset(Map<String, String> headers) {
@@ -29,7 +90,7 @@ public class HttpHeaderParser {
             String[] params = contentType.split(";");
             for (String param : params) {
                 String[] pair = param.trim().split("=");
-                if (pair.length == 2 && CHARSET.equals(pair[0])) {
+                if (pair.length == 2 && "charset".equals(pair[0])) {
                     return pair[1];
                 }
             }
@@ -43,7 +104,6 @@ public class HttpHeaderParser {
             return null;
         }
 
-        String location = headers.get(HEADER_LOCATION);
-        return location;
+        return headers.get(HttpHeaders.LOCATION);
     }
 }

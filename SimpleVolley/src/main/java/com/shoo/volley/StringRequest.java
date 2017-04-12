@@ -24,7 +24,7 @@ public class StringRequest extends Request<String> {
             result = new String(networkResponse.data);
         }
 
-        return Response.success(result, HttpHeaderParser.parseResponseHeaders(networkResponse.headers));
+        return Response.success(result, HttpHeaderParser.parseCacheHeaders(networkResponse));
     }
 
     @Override

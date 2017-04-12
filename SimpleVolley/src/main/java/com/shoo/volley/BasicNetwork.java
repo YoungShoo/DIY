@@ -1,6 +1,7 @@
 package com.shoo.volley;
 
 import android.os.SystemClock;
+import android.text.TextUtils;
 
 import com.shoo.volley.error.AuthFailError;
 import com.shoo.volley.error.ConnectionError;
@@ -27,8 +28,6 @@ import java.util.TreeMap;
  */
 
 public class BasicNetwork implements Network {
-
-    private static final String HEADER_IF_MODIFIED_SINCE = "If-Modified_Since";
 
     private final HttpStack mHttpStack;
 
@@ -85,6 +84,7 @@ public class BasicNetwork implements Network {
                         false, SystemClock.elapsedRealtime() - startTimeMs);
 
                 if (statusCode >= HttpStatus.SC_MULTIPLE_CHOICES && statusCode < HttpStatus.SC_BAD_REQUEST) {
+                    // TODO: 17-4-12 Shoo, Only retry on redirect error
                     // 3xx
                     attemptRetryOnException(request, new RedirectError(networkResponse));
                     continue;
@@ -110,9 +110,13 @@ public class BasicNetwork implements Network {
             return;
         }
 
+        if (!TextUtils.isEmpty(cacheEntry.eTag)) {
+            cacheHeaders.put(HttpHeaders.IF_NONE_MATCH, cacheEntry.eTag);
+        }
+
         if (cacheEntry.lastModified > 0) {
             Date date = new Date(cacheEntry.lastModified);
-            cacheHeaders.put(HEADER_IF_MODIFIED_SINCE, DateUtils.formatDate(date));
+            cacheHeaders.put(HttpHeaders.IF_MODIFIED_SINCE, DateUtils.formatDate(date));
         }
     }
 

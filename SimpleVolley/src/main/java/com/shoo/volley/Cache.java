@@ -14,12 +14,19 @@ public interface Cache {
     class Entry {
 
         public Map<String, String> responseHeaders;
-
         public byte[] data;
         public long lastModified;
+        public String eTag;
+        public long softExpires;
+        public long finalExpires;
+        public long serverDate;
 
         public boolean isExpired() {
-            return true;
+            return finalExpires < System.currentTimeMillis();
+        }
+
+        public boolean refreshNeeded() {
+            return softExpires < System.currentTimeMillis();
         }
     }
 }

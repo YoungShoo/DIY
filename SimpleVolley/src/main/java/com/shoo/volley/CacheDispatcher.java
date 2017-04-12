@@ -29,7 +29,7 @@ public class CacheDispatcher extends Thread {
 
         for (;;) {
             try {
-                Request<?> request = mCacheQueue.take();
+                final Request<?> request = mCacheQueue.take();
 
                 if (request.isCanceled()) {
                     request.finish();
@@ -52,10 +52,18 @@ public class CacheDispatcher extends Thread {
                 Response<?> response = request.parseNetworkResponse(new NetworkResponse(entry.data, entry
                         .responseHeaders));
 
-                mDelivery.postResponse(request, response);
-
-                // TODO: 17-4-10 Shoo 缓存失效/过期处理
-
+                if (!entry.refreshNeeded()) {
+                    mDelivery.postResponse(request, response);
+                } else {
+                    request.setCacheEntry(entry);
+                    response.intermediate = true;
+                    mDelivery.postResponse(request, response, new Runnable() {
+                        @Override
+                        public void run() {
+                            mNetworkQueue.add(request);
+                        }
+                    });
+                }
             } catch (InterruptedException e) {
                 if (mQuit) {
                     return;
